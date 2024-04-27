@@ -5,7 +5,7 @@
 #include <random> // pour pouvoir faire fonctionner shuffle
 #include <fstream>
 using namespace std;
-
+auto rng = std::default_random_engine {time(0)};
 struct Cell {
     int x, y;
     unordered_map<string, bool> Murs;
@@ -96,21 +96,15 @@ void Labyrinthe::afficher() {
     }
 }
 int Labyrinthe::recherche(Cell c) {
-    if ((c.x*m + c.y >= m * n || c.x*m + c.y) < 0) {
-        return -1;
+    // calcul de l'indice
+    int index = c.x * m + c.y;
+
+    // verifications
+    if (index >= 0 && index < n * m) {
+        return index;
+    } else {
+        return -1; // Cell not found
     }
-    else {
-        return c.x*m + c.y;
-    }
-    /*
-    // recherche la cellule c dans le vecteur de cellules
-    for (int i = 0; i < cells.size(); i++) {
-        if (cells[i]->x == c.x && cells[i]->y == c.y) {
-            return i;
-        }
-    }
-    return -1;
-    */
 }
 void Labyrinthe::deconnecte(Cell c1, Cell c2) {
     // supprime le mur entre les cellules c1 et c2
@@ -130,32 +124,22 @@ void Labyrinthe::deconnecte(Cell c1, Cell c2) {
         throw invalid_argument("Les cellules ne sont pas adjacentes");
     }
     if (pc1->x == pc2->x) {
-        // modifier dans adj aussi
         if (pc1->y < pc2->y) {
-            //adj[c1][index(adj[c1], c2)].Murs["left"] = false;
-            //adj[c2][index(adj[c1], c1)].Murs["right"] = false;
             pc1->Murs["up"] = false;
             pc2->Murs["down"] = false;
         } else {
-            //adj[c1][index(adj[c1], c2)].Murs["right"] = false;
-            //adj[c2][index(adj[c1], c1)].Murs["left"] = false;
             pc1->Murs["down"] = false;
             pc2->Murs["up"] = false;
         }
+    } else { // pc1->y == pc2->y
+    if (pc1->x < pc2->x) {
+        pc1->Murs["right"] = false;
+        pc2->Murs["left"] = false;
     } else {
-        if (pc1->x < pc2->x) {
-            //adj[c1][index(adj[c1], c2)].Murs["up"] = false;
-            //adj[c2][index(adj[c1], c1)].Murs["down"] = false;
-            pc1->Murs["right"] = false;
-            pc2->Murs["left"] = false;
-        } else {
-            //adj[c1][index(adj[c1], c2)].Murs["down"] = false;
-            //adj[c2][index(adj[c1], c1)].Murs["up"] = false;
-            pc1->Murs["left"] = false;
-            pc2->Murs["right"] = false;
-        }
+        pc1->Murs["left"] = false;
+        pc2->Murs["right"] = false;
     }
-   
+}
 }
 int Labyrinthe::index(vector<Cell> cellules,Cell c) {
     for (int i = 0; i < cellules.size(); i++) {
@@ -169,7 +153,7 @@ void Labyrinthe::genererAleatoire(Cell c) {
     Cell* current = cells[c.x*m + c.y];
     current->marked = true;
     vector<Cell> neighbors = adj[c];
-    shuffle(neighbors.begin(), neighbors.end(), default_random_engine(time(0))); // remplacer shuffle par random_shuffle si on utilise c++11
+    shuffle(neighbors.begin(), neighbors.end(), rng); // remplacer shuffle par random_shuffle si on utilise c++11
     for (Cell& c2 : neighbors) {
         if ((cells[recherche(c2)]->marked) == false) {
             deconnecte(c, c2);
@@ -218,8 +202,14 @@ ofstream Labyrinthe::write(string filename) {
     return file;
 }
 int main() {
-    int width = 4;
-    int height = 6;
+    for (int i = 0; i < 100; i++) {
+        int width = 100;
+        int height = 100;
+        Labyrinthe laby(width, height);
+        laby.genererAleatoire(Cell(rand() % width, rand() % height));
+    }
+    int width = 100;
+    int height = 100;
     Labyrinthe laby(width, height);
     laby.genererAleatoire(Cell(rand() % width, rand() % height));
     ofstream file = laby.write("laby.txt");
