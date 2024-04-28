@@ -4,7 +4,8 @@
 # pour vérifier si des fichiers sont identiques
 FILE_LIST=()
 HASH_LIST=()
-for file in media/laby*; do
+cd media
+for file in laby*; do
     echo "hashing $file"
     if [ -f "$file" ]; then
         HASH=$(sha256sum "$file" | cut -d ' ' -f 1)
@@ -21,11 +22,12 @@ for file in media/laby*; do
 done
 echo "terminé"
 # si labuniques existe deja, on le supprime
-if [ -d "media/labuniques" ]; then
+if [ -d "labuniques" ]; then
     rm -r labuniques
 fi
 mkdir labuniques
+cd ..
 for i in "${!FILE_LIST[@]}"; do
-    cp "${FILE_LIST[$i]}" "media/labuniques/${FILE_LIST[$i]}"
+    cp "media/${FILE_LIST[$i]}" "media/labuniques/${FILE_LIST[$i]}"
 done
 echo "${FILE_LIST[@]}" > labuniques.txt
