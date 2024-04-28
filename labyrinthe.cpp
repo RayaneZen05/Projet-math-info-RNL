@@ -12,7 +12,12 @@ struct Cell {
     bool marked = false;
 
     Cell(int x, int y);
-
+    Cell(const Cell& c) {
+        x = c.x;
+        y = c.y;
+        Murs = c.Murs;
+        marked = c.marked;
+    }
     struct CellHash {
         size_t operator()(const Cell& c) const {
             return hash<int>()(c.x) ^ hash<int>()(c.y);
@@ -60,8 +65,43 @@ struct Labyrinthe {
     */
     int calculerNbLab(Cell c, int &count); 
     ofstream write(string filename);
+    Labyrinthe& Labyrinthe::operator=(const Labyrinthe& l) {
+    if (this != &l) { // protect against invalid self-assignment
+        n = l.n;
+        m = l.m;
+        // copie des cellules individuelles
+        for (int i = 0; i < n * m; i++) {
+            if (cells[i] != nullptr) {
+                delete cells[i]; 
+            }
+            if (l.cells[i] != nullptr) {
+                cells[i] = new Cell(*(l.cells[i])); 
+            } else {
+                cells[i] = nullptr;
+            }
+        }
+        adj = l.adj;
+    }
+    // by convention, always return *this
+    return *this;
+}
 };
-
+struct ListeLabyrinthes {
+    int n, m;
+    vector<Labyrinthe> labyrinthes;
+    ListeLabyrinthes(int n, int m): n(n), m(m), labyrinthes(vector<Labyrinthe>{0}) {};
+    ListeLabyrinthes(int n, int m, int nb) {
+        this->n = n;
+        this->m = m;
+        for (int i = 0; i < nb; i++) {
+            Labyrinthe laby(n, m);
+            laby.genererAleatoire(Cell(rand() % n, rand() % m));
+            labyrinthes.push_back(laby);
+        }
+    }
+    /** Génére l'intégralité des labyrinthes n*m possibles   */
+    void genererTotal();
+};
 Labyrinthe::Labyrinthe(int n, int m) {
     this->n = n;
     this->m = m;
@@ -224,6 +264,20 @@ int Labyrinthe::calculerNbLab(Cell c, int &count) {
     }
     return count;
 }
+
+void ListeLabyrinthes::genererTotal() {
+    Labyrinthe laby(n, m);
+    Cell* current = laby.cells[laby.c.x*m + c.y];
+    current->marked = true;
+    vector<Cell> neighbors = laby.adj[c];
+    shuffle(neighbors.begin(), neighbors.end(), rng); // remplacer shuffle par random_shuffle si on utilise c++11
+    for (Cell& c2 : neighbors) {
+        if ((laby.cells[laby.recherche(c2)]->marked) == false) {
+            laby.deconnecte(c, c2);
+            laby.genererAleatoire(c2);
+        }
+    }
+}
 int main(int argc, char** argv) {
      bool b = false;
     // ajouter un argument specifique pour ne pas casser l'automatisation
@@ -232,8 +286,8 @@ int main(int argc, char** argv) {
             string opt;
             int width, height;
             ofstream file;
-            cout << "Que voulez-vous faire ? (gen, count, help)" << endl;
-            cin >> opt;
+            std::cout << "Que voulez-vous faire ? (gen, count, help)" << std::endl;
+            std::cin >> opt;
             b = true;
             if (opt == "gen") {
                 if (argc < 4) {
@@ -249,6 +303,7 @@ int main(int argc, char** argv) {
                 }
             } else if (opt == "count") {
                 // probablement devoir jouer avec la cell de depart
+                // tentative generer tous labyrinthes : commencer à cell de depart (i, j), ajouter à une stack copie du labyrinthe, faire ca à chaque fois jusqu'a obtenir dfs fini sur tous
                 if (argc < 3) {
                     throw invalid_argument("Il faut donner la largeur et la hauteur du labyrinthe en argument");
                 }
