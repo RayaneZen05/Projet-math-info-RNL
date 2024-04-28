@@ -57,10 +57,10 @@ struct Labyrinthe {
 Labyrinthe::Labyrinthe(int n, int m) {
     this->n = n;
     this->m = m;
-    this->cells = vector<Cell*>(n * m); // Allocate memory for all cells
+    this->cells = vector<Cell*>(n * m); // allocation de mémoire pour les cellules
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
-            cells[i*m + j] = new Cell(i, j); // Create the cells
+            cells[i*m + j] = new Cell(i, j); // Création des cellules (faudrait les libérer aussi...)
         }
     }
     for (int i = 0; i < n; i++) {
