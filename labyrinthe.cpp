@@ -33,6 +33,7 @@ Cell::Cell(int x, int y) {
 }
 
 struct Labyrinthe {
+    //int mazeCount = 0;
     int n, m;
     vector<Cell*> cells;
     unordered_map<Cell, vector<Cell>, Cell::CellHash> adj;
@@ -46,21 +47,28 @@ struct Labyrinthe {
     /** Renvoit l'indice d'une cellule dans un des vecteurs de la matrice d'adjacence donné */
     int index(vector<Cell> cellules,Cell c);
     void deconnecte(Cell c1, Cell c2);
+    /** génère un labyrinthe aléatoire à partir d'une cellule donnée 
+     * @param c la cellule de départ
+    */
     void genererAleatoire(Cell c);
     /** écrit le labyrinthe dans un fichier texte 
      *  @param filename le nom du fichier
      * @return un objet ofstream pour écrire dans le fichier
     */
+    /** calcule le nombre de labyrinthes possibles à partir d'une cellule donnée 
+     * @param c la cellule de départ
+    */
+    int calculerNbLab(Cell c, int &count); 
     ofstream write(string filename);
 };
 
 Labyrinthe::Labyrinthe(int n, int m) {
     this->n = n;
     this->m = m;
-    this->cells = vector<Cell*>(n * m); // Allocate memory for all cells
+    this->cells = vector<Cell*>(n * m); // allocation de mémoire
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
-            cells[i*m + j] = new Cell(i, j); // Create the cells
+            cells[i*m + j] = new Cell(i, j); // création des cellules (faudrait les libérer aussi...)
         }
     }
     for (int i = 0; i < n; i++) {
@@ -201,17 +209,65 @@ ofstream Labyrinthe::write(string filename) {
     }
     return file;
 }
-int main(int argc, char** argv) {
-    if (argc < 4) {
-        throw invalid_argument("Il faut donner la largeur et la hauteur du labyrinthe, et le nombre de labyrinthes à générer en argument");
+
+int Labyrinthe::calculerNbLab(Cell c, int &count) {
+    Cell* current = cells[c.x*m + c.y];
+    current->marked = true;
+    vector<Cell> neighbors = adj[c];
+    for (int i = 0; i < neighbors.size(); i++) {
+        if ((cells[recherche(neighbors[i])]->marked) == false) count++;
     }
-    int width = stoi(argv[1]);
-    int height = stoi(argv[2]);    
-    for (int i = 0; i < stoi(argv[3]); i++) {
-        Labyrinthe laby(width, height);
-        laby.genererAleatoire(Cell(rand() % width, rand() % height));
-        ofstream file = laby.write("media/laby" + to_string(i) + ".txt");
-        file.close();
+    for (Cell& c2 : neighbors) {
+        if ((cells[recherche(c2)]->marked) == false) {
+            calculerNbLab(c2, count);
+        }
+    }
+    return count;
+}
+int main(int argc, char** argv) {
+     bool b = false;
+    // ajouter un argument specifique pour ne pas casser l'automatisation
+    while (!b) {
+        try {
+            string opt;
+            int width, height;
+            ofstream file;
+            cout << "Que voulez-vous faire ? (gen, count, help)" << endl;
+            cin >> opt;
+            b = true;
+            if (opt == "gen") {
+                if (argc < 4) {
+                throw invalid_argument("Il faut donner la largeur et la hauteur du labyrinthe, et le nombre de labyrinthes à générer en argument");
+                }
+                width = stoi(argv[1]);
+                height = stoi(argv[2]);    
+                for (int i = 0; i < stoi(argv[3]); i++) {
+                    Labyrinthe laby(width, height);
+                    laby.genererAleatoire(Cell(rand() % width, rand() % height));
+                    file = laby.write("media/laby" + to_string(i) + ".txt");
+                    file.close();
+                }
+            } else if (opt == "count") {
+                // probablement devoir jouer avec la cell de depart
+                if (argc < 3) {
+                    throw invalid_argument("Il faut donner la largeur et la hauteur du labyrinthe en argument");
+                }
+                int count = 0;
+                width = stoi(argv[1]);
+                height = stoi(argv[2]);
+                Labyrinthe laby(width, height);
+                cout << laby.calculerNbLab(Cell(rand() % width, rand() % height), count) << endl;
+            } else if (opt == "help") {
+                cout << "gen : génère des labyrinthes aléatoires et les écrit dans des fichiers texte" << endl;
+                cout << "count : compte le nombre de labyrinthes possibles à partir d'une cellule donnée" << endl;
+            } else {
+                throw invalid_argument("Option invalide");
+            }
+        }
+        catch (invalid_argument e) {
+            cout << e.what() << endl;
+            b = false;
+        }
     }
     return 0;
 }
