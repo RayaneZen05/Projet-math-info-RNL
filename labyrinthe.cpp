@@ -201,18 +201,17 @@ ofstream Labyrinthe::write(string filename) {
     }
     return file;
 }
-int main() {
-    for (int i = 0; i < 100; i++) {
-        int width = 100;
-        int height = 100;
+int main(int argc, char** argv) {
+    if (argc < 4) {
+        throw invalid_argument("Il faut donner la largeur et la hauteur du labyrinthe, et le nombre de labyrinthes à générer en argument");
+    }
+    int width = stoi(argv[1]);
+    int height = stoi(argv[2]);    
+    for (int i = 0; i < stoi(argv[3]); i++) {
         Labyrinthe laby(width, height);
         laby.genererAleatoire(Cell(rand() % width, rand() % height));
+        ofstream file = laby.write("media/laby" + to_string(i) + ".txt");
+        file.close();
     }
-    int width = 100;
-    int height = 100;
-    Labyrinthe laby(width, height);
-    laby.genererAleatoire(Cell(rand() % width, rand() % height));
-    ofstream file = laby.write("laby.txt");
-    file.close();
     return 0;
 }
