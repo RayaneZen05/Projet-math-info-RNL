@@ -4,6 +4,7 @@
 #include <algorithm> // pour la fonction shuffle dans générerAleatoire
 #include <random> // pour pouvoir faire fonctionner shuffle
 #include <fstream>
+#include <chrono>
 using namespace std;
 auto rng = std::default_random_engine {time(0)};
 struct Cell {
@@ -201,6 +202,7 @@ ofstream Labyrinthe::write(string filename) {
     }
     return file;
 }
+
 int main(int argc, char** argv) {
     if (argc < 4) {
         throw invalid_argument("Il faut donner la largeur et la hauteur du labyrinthe, et le nombre de labyrinthes à générer en argument");
@@ -209,9 +211,10 @@ int main(int argc, char** argv) {
     int height = stoi(argv[2]);    
     for (int i = 0; i < stoi(argv[3]); i++) {
         Labyrinthe laby(width, height);
-        laby.genererAleatoire(Cell(rand() % width, rand() % height));
+        laby.genererAleatoire(Cell(rand() % width , rand() % height));
         ofstream file = laby.write("media/laby" + to_string(i) + ".txt");
         file.close();
     }
     return 0;
 }
+// vérifier true randomness rand() % truc
